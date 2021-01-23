@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { BrowserRouter as Router, Route } from "react-router-dom";
+import Home from "./home/Home";
 import Login from "./login/Login";
 
 //Creating controller class for easy routing the pages
@@ -18,8 +19,14 @@ class Controller extends Component {
             exact
             path="/"
             render={(props) => <Login {...props} baseUrl={this.baseUrl} />}
-          />{" "}
+          />
           {/* Route to login Page */}
+          <Route
+            exact
+            path="/home"
+            render={(props) => <Home {...props} baseUrl={this.baseUrl} />}
+          />
+          {/* Route to home Page */}
         </div>
       </Router>
     );
