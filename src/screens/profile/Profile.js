@@ -219,7 +219,7 @@ class Profile extends Component {
             profile_picture: img.media_url,
             username: img.username,
           },
-          text: "Test#" + img.id,
+          text: img.caption + "#" + img.id,
         },
         images: { standard_resolution: { url: img.media_url } },
         user: {
