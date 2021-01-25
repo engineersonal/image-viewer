@@ -78,27 +78,7 @@ class Home extends Component {
   constructor() {
     super();
     this.state = {
-      respdata: [
-        {
-          id: "17848514759505485",
-        },
-        {
-          id: "17908666795620558",
-          caption: "Christmas time",
-        },
-        {
-          id: "17892009775880031",
-          caption: "Playing on rockers",
-        },
-        {
-          id: "17857552316452074",
-          caption: "Dancing",
-        },
-        {
-          id: "17856506198409793",
-          caption: "Vedanshi",
-        },
-      ],
+      respdata: [],
       imageInfo: [],
       images: [],
       comments: [],
@@ -115,11 +95,13 @@ class Home extends Component {
 
   async getImageDetails(x) {
     let myPromise = new Promise((resolve, reject) => {
+      let sUrl =
+        "https://graph.instagram.com/" +
+        x.id +
+        "?fields=id,media_type,media_url,username,timestamp&access_token=" +
+        this.state.accessToken;
       $.ajax({
-        url:
-          "https://graph.instagram.com/" +
-          x.id +
-          "?fields=id,media_type,media_url,username,timestamp&access_token=IGQVJVYTk2Q1d1NG0xOU5Td3p4QUkzQ0NTQkk1bi1kcGVmOXBjbWN1SUE2b1JqQ1lLNmpEZAHdwc3RacmZAQbTc4Q2pUd05qM213NjduMWppSXYxMVRlMk04SEFIcGpkYTk3am9mei1FZA2lWYVdZAWWZARNgZDZD",
+        url: sUrl,
         type: "GET",
         headers: { Accept: "application/json" },
         success: function(data) {
@@ -145,43 +127,42 @@ class Home extends Component {
     API calls are made only when the user is Logged in*/
     let that = this;
     if (that.state.isLoggedIn) {
-      let data = null;
-      let xhr = new XMLHttpRequest();
-      xhr.addEventListener("readystatechange", function() {
-        if (xhr.readyState === 4) {
-          that.setState({
-            /*Set the respData to get the imageIds along with captions*/
-            respdata: JSON.parse(that.responseText).data,
-          });
-        }
-      });
-      xhr.open(
-        "GET",
-        that.props.baseUrl +
-          "me/media?fields=id,caption&access_token=" +
-          that.state.accessToken
-      );
-      xhr.send(data);
-    }
-
-    /*Get data from second api all the images
+      let pUrl =
+        "https://graph.instagram.com/me/media?fields=id,caption&access_token=" +
+        this.state.accessToken;
+      $.ajax({
+        url: pUrl,
+        type: "GET",
+        headers: { Accept: "application/json" },
+        success: function(data) {
+          //Set the respdata array with image Ids which will be the input to
+          //second API call
+          that.setState({ respdata: data.data });
+          /*Get data from second api all the images
     This api is called to get all the images data posted by the user
-    This data will maintained in state as an array and the same of the array is images
-    API calls are made only when the user is Logged in*/
-    if (this.state.isLoggedIn) {
-      let promiseArr = this.state.respdata.map((x) => this.getImageDetails(x));
-      //Resolve the promise array and resturcture the data
-      Promise.all(promiseArr)
-        .then((values) => {
-          that.setState({ imageInfo: values });
-          that.reStructureData();
-        })
-        .catch((error) => {
-          console.error(error.message);
-        });
+    This data will maintained in state as an array when the user is Logged in*/
+          that.getMoreDetails();
+        },
+        error: function(error) {
+          alert(JSON.stringify(error));
+        },
+      });
     }
   }
-
+  //This method should be called after first API call to get image details
+  //based on image Ids from first API call
+  getMoreDetails = () => {
+    let promiseArr = this.state.respdata.map((x) => this.getImageDetails(x));
+    //Resolve the promise array and restructure the data
+    Promise.all(promiseArr)
+      .then((values) => {
+        this.setState({ imageInfo: values });
+        this.reStructureData();
+      })
+      .catch((error) => {
+        console.error(error.message);
+      });
+  };
   reStructureData = () => {
     var tempImages = [];
     this.state.imageInfo.forEach((img) => {
