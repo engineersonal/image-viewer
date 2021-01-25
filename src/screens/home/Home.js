@@ -93,6 +93,7 @@ class Home extends Component {
     };
   }
 
+  //This method is built on async-await concept to resolve the promise for the second API based on image Ids from first API call
   async getImageDetails(x) {
     let myPromise = new Promise((resolve, reject) => {
       let sUrl =
@@ -115,8 +116,8 @@ class Home extends Component {
         },
       });
     });
-    let userid = await myPromise;
-    return userid;
+    let imageIDDetails = await myPromise;
+    return imageIDDetails;
   }
   // As per the warning UNSAFE_ is prefixed before componentWillMount method
   // In this method all the api will be called before the component is show,
@@ -163,6 +164,8 @@ class Home extends Component {
         console.error(error.message);
       });
   };
+
+  //This method restructures the image data in an appropriate format
   reStructureData = () => {
     var tempImages = [];
     this.state.imageInfo.forEach((img) => {

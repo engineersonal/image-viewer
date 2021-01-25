@@ -16,6 +16,7 @@ import GridListTile from "@material-ui/core/GridListTile";
 import IconButton from "@material-ui/core/IconButton";
 import FavoriteIcon from "@material-ui/icons/Favorite";
 import FavoriteBorderIcon from "@material-ui/icons/FavoriteBorder";
+import $ from "jquery";
 
 const customStyles = {
   content: {
@@ -79,51 +80,11 @@ class Profile extends Component {
       profilePicture: sessionStorage.getItem("profile_picture"),
       username: sessionStorage.getItem("username"),
       fullname: "Sonal Sharma",
-      noOfPosts: 5,
-      follows: 1,
-      followedBy: 17,
-      imageInfo: [
-        {
-          id: "17848514759505485",
-          media_type: "IMAGE",
-          media_url:
-            "https://scontent.cdninstagram.com/v/t51.29350-15/141829386_3712321555482566_4888731418236222588_n.jpg?_nc_cat=103&ccb=2&_nc_sid=8ae9d6&_nc_ohc=PVJFSOPtBIEAX9CCUB0&_nc_ht=scontent.cdninstagram.com&oh=540f068ca741791ae912b9299734194d&oe=6034DB6A",
-          username: "sonal.sharma.2681",
-          timestamp: "2021-01-24T09:33:57+0000",
-        },
-        {
-          id: "17908666795620558",
-          media_type: "IMAGE",
-          media_url:
-            "https://scontent.cdninstagram.com/v/t51.29350-15/141440023_747825802795843_679673727407928515_n.jpg?_nc_cat=110&ccb=2&_nc_sid=8ae9d6&_nc_ohc=yLFFnSBSIJQAX_bCwV-&_nc_oc=AQmiDw0l-N-8YM0-mJeKJ_L1_E1C6QyayljTj2iPgXH7r8Yf_cwNGpJyULH7psWZppc&_nc_ht=scontent.cdninstagram.com&oh=2864f7ee0513e0e7930dba7a29d9fd48&oe=6031D4DA",
-          username: "sonal.sharma.2681",
-          timestamp: "2021-01-24T09:30:28+0000",
-        },
-        {
-          id: "17892009775880031",
-          media_type: "IMAGE",
-          media_url:
-            "https://scontent.cdninstagram.com/v/t51.29350-15/141765994_316169763170928_3419410202591486790_n.jpg?_nc_cat=103&ccb=2&_nc_sid=8ae9d6&_nc_ohc=eP0_rAtojuEAX8jkrts&_nc_ht=scontent.cdninstagram.com&oh=340f73cbee5fc98beabda85882a59056&oe=6034BA67",
-          username: "sonal.sharma.2681",
-          timestamp: "2021-01-24T09:27:32+0000",
-        },
-        {
-          id: "17857552316452074",
-          media_type: "IMAGE",
-          media_url:
-            "https://scontent.cdninstagram.com/v/t51.29350-15/141049163_1139006559864856_4113790703231893679_n.jpg?_nc_cat=108&ccb=2&_nc_sid=8ae9d6&_nc_ohc=S76wVOIEDbEAX8PUyiZ&_nc_ht=scontent.cdninstagram.com&oh=e72bc786bb79b002bd83256cb1847cdd&oe=603378A3",
-          username: "sonal.sharma.2681",
-          timestamp: "2021-01-24T09:25:44+0000",
-        },
-        {
-          id: "17856506198409793",
-          media_type: "IMAGE",
-          media_url:
-            "https://scontent.cdninstagram.com/v/t51.29350-15/142270645_3737569636327635_7607618677435308680_n.jpg?_nc_cat=111&ccb=2&_nc_sid=8ae9d6&_nc_ohc=NHvGuC1iv2AAX-4YTFe&_nc_ht=scontent.cdninstagram.com&oh=dc99eb134b275a9e1d625a3ac8e94eb8&oe=6032FBA5",
-          username: "sonal.sharma.2681",
-          timestamp: "2021-01-24T09:23:11+0000",
-        },
-      ],
+      noOfPosts: 0,
+      follows: 0,
+      followedBy: 0,
+      respdata: [],
+      imageInfo: [],
       modalIsOpen: false,
       newName: "",
       fullNameRequired: "dispNone",
@@ -142,9 +103,50 @@ class Profile extends Component {
       accessToken: sessionStorage.getItem("access-token"),
     };
   }
+  //This method is built on async-await concept to resolve the promise for the second API based on image Ids from first API call
+  async getImageDetails(x) {
+    let myPromise = new Promise((resolve, reject) => {
+      let sUrl =
+        "https://graph.instagram.com/" +
+        x.id +
+        "?fields=id,media_type,media_url,username,timestamp&access_token=" +
+        this.state.accessToken;
+      $.ajax({
+        url: sUrl,
+        type: "GET",
+        headers: { Accept: "application/json" },
+        success: function(data) {
+          data.caption = x.caption ? x.caption : "";
+          var imgDetail = data;
+          resolve(imgDetail);
+        },
+        error: function(error) {
+          alert(JSON.stringify(error));
+          reject(); // signify the promise faulted with no return value
+        },
+      });
+    });
+    let imageIDDetails = await myPromise;
+    return imageIDDetails;
+  }
 
+  //This method should be called after first API call to get image details
+  //based on image Ids from first API call
+  getMoreDetails = () => {
+    let promiseArr = this.state.respdata.map((x) => this.getImageDetails(x));
+    //Resolve the promise array and restructure the data
+    Promise.all(promiseArr)
+      .then((values) => {
+        this.setState({ imageInfo: values });
+        this.reStructureData();
+      })
+      .catch((error) => {
+        console.error(error.message);
+      });
+  };
   componentDidMount() {
     if (this.state.isLoggedIn) {
+      let that = this;
       //   let resp = {};
       //   let data = null;
       //   let xhr = new XMLHttpRequest();
@@ -179,11 +181,33 @@ class Profile extends Component {
       //       that.state.accessToken
       //   );
       //   imageXhr.send(imageData);
-
-      this.reStructureData();
+      let pUrl =
+        "https://graph.instagram.com/me/media?fields=id,caption&access_token=" +
+        this.state.accessToken;
+      $.ajax({
+        url: pUrl,
+        type: "GET",
+        headers: { Accept: "application/json" },
+        success: function(data) {
+          //Set the respdata array with image Ids which will be the input to
+          //second API call
+          that.setState({ respdata: data.data });
+          that.setState({ noOfPosts: data.data.length });
+          that.setState({ follows: 1 });
+          that.setState({ followedBy: 17 });
+          /*Get data from second api all the images
+	This api is called to get all the images data posted by the user
+	This data will maintained in state as an array when the user is Logged in*/
+          that.getMoreDetails();
+        },
+        error: function(error) {
+          alert(JSON.stringify(error));
+        },
+      });
     }
   }
 
+  //This method restructures the image data in an appropriate format
   reStructureData = () => {
     var tempImages = [];
     this.state.imageInfo.forEach((img) => {
@@ -202,7 +226,7 @@ class Profile extends Component {
           profile_picture: sessionStorage.getItem("profile_picture"),
           username: img.username,
         },
-        user_has_liked: 2,
+        user_has_liked: 1,
         likes: { count: 1 },
       };
       tempImages.push(imgObj);
