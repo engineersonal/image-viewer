@@ -9,7 +9,7 @@ class Controller extends Component {
   constructor() {
     super();
     //setting the baseUrl of the api
-    this.baseUrl = "https://api.instagram.com/v1/users/self/";
+    this.baseUrl = "https://graph.instagram.com/";
   }
 
   render() {

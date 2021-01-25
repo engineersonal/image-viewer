@@ -76,12 +76,54 @@ class Profile extends Component {
     super();
     this.state = {
       isLoggedIn: sessionStorage.getItem("access-token") == null ? false : true,
-      profilePicture: "",
-      username: "",
-      fullname: "",
-      noOfPosts: 0,
-      follows: 0,
-      followedBy: 0,
+      profilePicture: sessionStorage.getItem("profile_picture"),
+      username: sessionStorage.getItem("username"),
+      fullname: "Sonal Sharma",
+      noOfPosts: 5,
+      follows: 1,
+      followedBy: 17,
+      imageInfo: [
+        {
+          id: "17848514759505485",
+          media_type: "IMAGE",
+          media_url:
+            "https://scontent.cdninstagram.com/v/t51.29350-15/141829386_3712321555482566_4888731418236222588_n.jpg?_nc_cat=103&ccb=2&_nc_sid=8ae9d6&_nc_ohc=PVJFSOPtBIEAX9CCUB0&_nc_ht=scontent.cdninstagram.com&oh=540f068ca741791ae912b9299734194d&oe=6034DB6A",
+          username: "sonal.sharma.2681",
+          timestamp: "2021-01-24T09:33:57+0000",
+        },
+        {
+          id: "17908666795620558",
+          media_type: "IMAGE",
+          media_url:
+            "https://scontent.cdninstagram.com/v/t51.29350-15/141440023_747825802795843_679673727407928515_n.jpg?_nc_cat=110&ccb=2&_nc_sid=8ae9d6&_nc_ohc=yLFFnSBSIJQAX_bCwV-&_nc_oc=AQmiDw0l-N-8YM0-mJeKJ_L1_E1C6QyayljTj2iPgXH7r8Yf_cwNGpJyULH7psWZppc&_nc_ht=scontent.cdninstagram.com&oh=2864f7ee0513e0e7930dba7a29d9fd48&oe=6031D4DA",
+          username: "sonal.sharma.2681",
+          timestamp: "2021-01-24T09:30:28+0000",
+        },
+        {
+          id: "17892009775880031",
+          media_type: "IMAGE",
+          media_url:
+            "https://scontent.cdninstagram.com/v/t51.29350-15/141765994_316169763170928_3419410202591486790_n.jpg?_nc_cat=103&ccb=2&_nc_sid=8ae9d6&_nc_ohc=eP0_rAtojuEAX8jkrts&_nc_ht=scontent.cdninstagram.com&oh=340f73cbee5fc98beabda85882a59056&oe=6034BA67",
+          username: "sonal.sharma.2681",
+          timestamp: "2021-01-24T09:27:32+0000",
+        },
+        {
+          id: "17857552316452074",
+          media_type: "IMAGE",
+          media_url:
+            "https://scontent.cdninstagram.com/v/t51.29350-15/141049163_1139006559864856_4113790703231893679_n.jpg?_nc_cat=108&ccb=2&_nc_sid=8ae9d6&_nc_ohc=S76wVOIEDbEAX8PUyiZ&_nc_ht=scontent.cdninstagram.com&oh=e72bc786bb79b002bd83256cb1847cdd&oe=603378A3",
+          username: "sonal.sharma.2681",
+          timestamp: "2021-01-24T09:25:44+0000",
+        },
+        {
+          id: "17856506198409793",
+          media_type: "IMAGE",
+          media_url:
+            "https://scontent.cdninstagram.com/v/t51.29350-15/142270645_3737569636327635_7607618677435308680_n.jpg?_nc_cat=111&ccb=2&_nc_sid=8ae9d6&_nc_ohc=NHvGuC1iv2AAX-4YTFe&_nc_ht=scontent.cdninstagram.com&oh=dc99eb134b275a9e1d625a3ac8e94eb8&oe=6032FBA5",
+          username: "sonal.sharma.2681",
+          timestamp: "2021-01-24T09:23:11+0000",
+        },
+      ],
       modalIsOpen: false,
       newName: "",
       fullNameRequired: "dispNone",
@@ -103,45 +145,78 @@ class Profile extends Component {
 
   componentDidMount() {
     if (this.state.isLoggedIn) {
-      let resp = {};
-      let data = null;
-      let xhr = new XMLHttpRequest();
-      let that = this;
-      xhr.addEventListener("readystatechange", function() {
-        if (xhr.readyState === 4) {
-          resp = JSON.parse(this.responseText).data;
-          that.setState({ profilePicture: resp["profile_picture"] });
-          that.setState({ username: resp["username"] });
-          that.setState({ noOfPosts: resp["counts"]["media"] });
-          that.setState({ follows: resp["counts"]["follows"] });
-          that.setState({ followedBy: resp["counts"]["followed_by"] });
-          that.setState({ fullname: resp["full_name"] });
-        }
-      });
-      xhr.open(
-        "GET",
-        this.props.baseUrl + "?access_token=" + that.state.accessToken
-      );
+      //   let resp = {};
+      //   let data = null;
+      //   let xhr = new XMLHttpRequest();
+      //   let that = this;
+      //   xhr.addEventListener("readystatechange", function() {
+      //     if (xhr.readyState === 4) {
+      //       resp = JSON.parse(this.responseText).data;
+      //       that.setState({ profilePicture: resp["profile_picture"] });
+      //       that.setState({ username: resp["username"] });
+      //       that.setState({ noOfPosts: resp["counts"]["media"] });
+      //       that.setState({ follows: resp["counts"]["follows"] });
+      //       that.setState({ followedBy: resp["counts"]["followed_by"] });
+      //       that.setState({ fullname: resp["full_name"] });
+      //     }
+      //   });
+      //   xhr.open(
+      //     "GET",
+      //     this.props.baseUrl + "?access_token=" + that.state.accessToken
+      //   );
+      //   xhr.send(data);
+      //   var imageData = null;
+      //   let imageXhr = new XMLHttpRequest();
+      //   imageXhr.addEventListener("readystatechange", function() {
+      //     if (imageXhr.readyState === 4) {
+      //       that.setState({ imagesData: JSON.parse(this.responseText).data });
+      //     }
+      //   });
+      //   imageXhr.open(
+      //     "GET",
+      //     this.props.baseUrl +
+      //       "media/recent?access_token=" +
+      //       that.state.accessToken
+      //   );
+      //   imageXhr.send(imageData);
 
-      xhr.send(data);
-
-      var imageData = null;
-      let imageXhr = new XMLHttpRequest();
-      imageXhr.addEventListener("readystatechange", function() {
-        if (imageXhr.readyState === 4) {
-          that.setState({ imagesData: JSON.parse(this.responseText).data });
-        }
-      });
-      imageXhr.open(
-        "GET",
-        this.props.baseUrl +
-          "media/recent?access_token=" +
-          that.state.accessToken
-      );
-      imageXhr.send(imageData);
+      this.reStructureData();
     }
   }
 
+  reStructureData = () => {
+    var tempImages = [];
+    this.state.imageInfo.forEach((img) => {
+      var imgObj = {
+        id: img.id,
+        created_time: new Date(img.timestamp).toLocaleString(),
+        caption: {
+          from: {
+            profile_picture: img.media_url,
+            username: img.username,
+          },
+          text: "Test#" + img.id,
+        },
+        images: { standard_resolution: { url: img.media_url } },
+        user: {
+          profile_picture: sessionStorage.getItem("profile_picture"),
+          username: img.username,
+        },
+        user_has_liked: 2,
+        likes: { count: 1 },
+      };
+      tempImages.push(imgObj);
+    });
+    this.loadHomePage(tempImages);
+  };
+
+  //This method takes the image array as sets it to the state images array triggering rerender
+  loadHomePage = (imageArr) => {
+    this.setState({
+      ...this.state,
+      imagesData: imageArr,
+    });
+  };
   // Sets state of modalIsOpen to true to open the modal when EditIcon is clicked
   openModalHandler = () => {
     this.setState({ modalIsOpen: true });
@@ -217,22 +292,24 @@ class Profile extends Component {
     }
   };
 
-  // Handles adding of comments to an image
+  // Handles adding of comments to an image, dont add blank comments
   onClickAddBtn = (imageId) => {
-    var count = this.state.count;
-    var comment = {
-      id: count,
-      imageId: imageId,
-      username: this.state.username,
-      text: this.state.commentText.text,
-    };
-    count++;
-    var comments = [...this.state.comments, comment];
-    this.setState({
-      count: count,
-      comments: comments,
-      commentText: "",
-    });
+    if (this.state.commentText.text) {
+      var count = this.state.count;
+      var comment = {
+        id: count,
+        imageId: imageId,
+        username: this.state.username,
+        text: this.state.commentText.text,
+      };
+      count++;
+      var comments = [...this.state.comments, comment];
+      this.setState({
+        count: count,
+        comments: comments,
+        commentText: "",
+      });
+    }
   };
 
   onCommentTextChangeHandler = (event, imageId) => {

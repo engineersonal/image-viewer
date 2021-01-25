@@ -65,6 +65,8 @@ class Header extends Component {
   //The method clears the session deatils like access-token and changes the logged to false
   onLogOutClicked = (event) => {
     sessionStorage.removeItem("access-token"); //Clearing access-token
+    sessionStorage.removeItem("profile_picture");
+    sessionStorage.removeItem("username");
     this.setState({
       isLoggedIn: false,
     });

@@ -41,10 +41,14 @@ class Login extends Component {
    */
   loginClickHandler = () => {
     //Setting credentials in the login handler
-    let username = "InstaGrad";
-    let password = "Sass@123#";
+    let username = "Admin";
+    let password = "Sonal@123";
 
-    let accessToken = "8661035776.d0fcd39.39f63ab2f88d4f9c92b0862729ee2784";
+    let accessToken =
+      "IGQVJVYTk2Q1d1NG0xOU5Td3p4QUkzQ0NTQkk1bi1kcGVmOXBjbWN1SUE2b1JqQ1lLNmpEZAHdwc3RacmZAQbTc4Q2pUd05qM213NjduMWppSXYxMVRlMk04SEFIcGpkYTk3am9mei1FZA2lWYVdZAWWZARNgZDZD";
+    let profile_picture =
+      "https://instagram.fdel10-1.fna.fbcdn.net/v/t51.2885-19/s150x150/129774151_392973145306534_8683658149185869540_n.jpg?_nc_ht=instagram.fdel10-1.fna.fbcdn.net&_nc_ohc=71dm1WruyooAX8IAvf2&tp=1&oh=f564b7bbb293bcd45efd4202eb4444ba&oe=603672D6";
+    let user_name = "sonal.sharma.2681";
     if (this.state.username === "" || this.state.password === "") {
       /* The usernameRequired and passwordRequired fields are used when we want to store the class to be assigned */
       this.state.username === ""
@@ -60,6 +64,8 @@ class Login extends Component {
     ) {
       // Setting token in session storage
       sessionStorage.setItem("access-token", accessToken);
+      sessionStorage.setItem("profile_picture", profile_picture);
+      sessionStorage.setItem("username", user_name);
       // Setting state so as to check and route to home page if login is successful.
       this.setState({
         isLoggedIn: true,

@@ -15,6 +15,7 @@ import InputLabel from "@material-ui/core/InputLabel";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { Redirect } from "react-router-dom";
+import $ from "jquery";
 
 import "./Home.css";
 
@@ -77,10 +78,32 @@ class Home extends Component {
   constructor() {
     super();
     this.state = {
+      respdata: [
+        {
+          id: "17848514759505485",
+        },
+        {
+          id: "17908666795620558",
+          caption: "Christmas time",
+        },
+        {
+          id: "17892009775880031",
+          caption: "Playing on rockers",
+        },
+        {
+          id: "17857552316452074",
+          caption: "Dancing",
+        },
+        {
+          id: "17856506198409793",
+          caption: "Vedanshi",
+        },
+      ],
+      imageInfo: [],
       images: [],
       comments: [],
-      profile_picture: "",
-      userName: "",
+      profile_picture: sessionStorage.getItem("profile_picture"),
+      userName: sessionStorage.getItem("username"),
       commentText: "",
       searchOn: false,
       originalImageArr: {},
@@ -89,29 +112,54 @@ class Home extends Component {
       count: 1,
     };
   }
-  /*As per the warning UNSAFE_ is prefixed before componentWillMount method
-  In this method all the api will be called before the component is show,
-  the rendering will occur once all the initial state are set*/
+
+  async getImageDetails(x) {
+    let myPromise = new Promise((resolve, reject) => {
+      $.ajax({
+        url:
+          "https://graph.instagram.com/" +
+          x.id +
+          "?fields=id,media_type,media_url,username,timestamp&access_token=IGQVJVYTk2Q1d1NG0xOU5Td3p4QUkzQ0NTQkk1bi1kcGVmOXBjbWN1SUE2b1JqQ1lLNmpEZAHdwc3RacmZAQbTc4Q2pUd05qM213NjduMWppSXYxMVRlMk04SEFIcGpkYTk3am9mei1FZA2lWYVdZAWWZARNgZDZD",
+        type: "GET",
+        headers: { Accept: "application/json" },
+        success: function(data) {
+          data.caption = x.caption ? x.caption : "";
+          var imgDetail = data;
+          resolve(imgDetail);
+        },
+        error: function(error) {
+          alert(JSON.stringify(error));
+          reject(); // signify the promise faulted with no return value
+        },
+      });
+    });
+    let userid = await myPromise;
+    return userid;
+  }
+  // As per the warning UNSAFE_ is prefixed before componentWillMount method
+  // In this method all the api will be called before the component is show,
+  // the rendering will occur once all the initial state are set
   UNSAFE_componentWillMount() {
     /*Get data from first API endpoint
-    This is called to get the profile details of the user such as username and profile_picture
+    This is called to get the imageIds of the logged-in user
     API calls are made only when the user is Logged in*/
     let that = this;
-    if (this.state.isLoggedIn) {
+    if (that.state.isLoggedIn) {
       let data = null;
       let xhr = new XMLHttpRequest();
       xhr.addEventListener("readystatechange", function() {
-        if (this.readyState === 4) {
+        if (xhr.readyState === 4) {
           that.setState({
-            /*Profile picture obtained from the API is stored in profile_picture & username in userName*/
-            profile_picture: JSON.parse(this.responseText).data.profile_picture,
-            userName: JSON.parse(this.responseText).data.username,
+            /*Set the respData to get the imageIds along with captions*/
+            respdata: JSON.parse(that.responseText).data,
           });
         }
       });
       xhr.open(
         "GET",
-        this.props.baseUrl + "?access_token=" + that.state.accessToken
+        that.props.baseUrl +
+          "me/media?fields=id,caption&access_token=" +
+          that.state.accessToken
       );
       xhr.send(data);
     }
@@ -121,32 +169,41 @@ class Home extends Component {
     This data will maintained in state as an array and the same of the array is images
     API calls are made only when the user is Logged in*/
     if (this.state.isLoggedIn) {
-      let xhrImages = new XMLHttpRequest();
-      xhrImages.addEventListener("readystatechange", function() {
-        if (this.readyState === 4) {
-          let imageArr = JSON.parse(this.responseText).data;
-          /*As the created_time are in milliseconds it would be  converted as per the required format*/
-          imageArr.forEach((element) => {
-            var date = parseInt(element.created_time, 10);
-            date = new Date(date * 1000);
-            //changing the format to Locale String
-            element.created_time = date.toLocaleString();
-          });
-          //loadHomePage method called to set the state of the images and render the page
-          that.loadHomePage(imageArr);
-        }
-      });
-      xhrImages.open(
-        "GET",
-        this.props.baseUrl +
-          "media/recent?access_token=" +
-          that.state.accessToken
-      );
-      xhrImages.send();
+      let promiseArr = this.state.respdata.map((x) => this.getImageDetails(x));
+      //Resolve the promise array and resturcture the data
+      Promise.all(promiseArr)
+        .then((values) => {
+          that.setState({ imageInfo: values });
+          that.reStructureData();
+        })
+        .catch((error) => {
+          console.error(error.message);
+        });
     }
   }
 
-  /*This method takes the image array as sets it to the state images array triggering rerender*/
+  reStructureData = () => {
+    var tempImages = [];
+    this.state.imageInfo.forEach((img) => {
+      var imgObj = {
+        id: img.id,
+        created_time: new Date(img.timestamp).toLocaleString(),
+        caption: {
+          from: {
+            profile_picture: img.media_url,
+            username: img.username,
+          },
+          text: img.caption + "#" + img.id,
+        },
+        images: { standard_resolution: { url: img.media_url } },
+        user_has_liked: 1,
+        likes: { count: 1 },
+      };
+      tempImages.push(imgObj);
+    });
+    this.loadHomePage(tempImages);
+  };
+  //This method takes the image array as sets it to the state images array triggering rerender
   loadHomePage = (imageArr) => {
     this.setState({
       ...this.state,
@@ -154,9 +211,9 @@ class Home extends Component {
     });
   };
 
-  /*Method used to handle changes in the comment input text
-  This method takes the imageId as one parameter which is added to comment object and then updates the commentText state
-  ImageId is given so that the comment input line of active card only shows the input text given.*/
+  //Method used to handle changes in the comment input text
+  //This method takes the imageId as one parameter which is added to comment object and then updates the commentText state
+  //ImageId is given so that the comment input line of active card only shows the input text given.
   onCommentTextChangeHandler = (event, imageId) => {
     var comment = {
       id: imageId,
@@ -168,35 +225,38 @@ class Home extends Component {
     });
   };
 
-  /*This method is to handle the ADD button beside the comment text box
-  This Method takes imageId so that comment is added/shown to the image it was added to
-  Count is to keep key unique for every comment added
-  username is to keep the username if the user commented
-  Comments are stored in the comment array controlled by state
-  Once the comment is pushed to the state comment array commentText is made empty so that comment input box returns to empty line*/
+  //This method is to handle the ADD button beside the comment text box
+  // This Method takes imageId so that comment is added/shown to the image it was added to
+  //Don't add blank comment
+  //Count is to keep key unique for every comment added
+  //username is to keep the username if the user commented
+  //Comments are stored in the comment array controlled by state
+  //Once the comment is pushed to the state comment array commentText is made empty so that comment input box returns to empty line
   onClickAddBtn = (imageId) => {
-    var count = this.state.count;
-    var comment = {
-      id: count,
-      imageId: imageId,
-      username: this.state.userName,
-      text: this.state.commentText.text,
-    };
-    count++;
-    var comments = [...this.state.comments, comment];
-    this.setState({
-      ...this.state,
-      count: count,
-      comments: comments,
-      commentText: "",
-    });
+    if (this.state.commentText.text) {
+      var count = this.state.count;
+      var comment = {
+        id: count,
+        imageId: imageId,
+        username: this.state.userName,
+        text: this.state.commentText.text,
+      };
+      count++;
+      var comments = [...this.state.comments, comment];
+      this.setState({
+        ...this.state,
+        count: count,
+        comments: comments,
+        commentText: "",
+      });
+    }
   };
 
-  /*This method handles when the like button is clicked.
-  The like button is favorite icon
-  when the like button is clicked the corresponding imageId is passed,
-  which is iterated over a loop to find the images and the boolean value of user_has_liked is changed to false
-  The likes count is either increased or decreased based on the previous state of user_has_liked*/
+  // This Handles when the like button is clicked.
+  //The like button is favorite icon
+  // when the like button is clicked the corresponding imageId is passed,
+  //which is iterated over a loop to find the images and the boolean value of user_has_liked is changed to false
+  //The likes count is either increased or decreased based on the previous state of user_has_liked
   likeBtnHandler = (imageId) => {
     var i = 0;
     var imageArray = this.state.images;
@@ -221,26 +281,27 @@ class Home extends Component {
       }
     }
   };
-  /*This method is called from the header,this is passed as a props to the header
-  Method handles when search input is changed
-  The method takes the keyword checks with the caption and the images is updated with caption matching with keyword,
-  thus triggering render and only showing those images
-  The method maintains the original data in the controlled state using    originalImageArr until the searchON is true
-  Once the search is complete or search input value is "" then the images is set to originalImageArr rendering back to original state*/
+  //This method is called from the header,this is passed as a props to the header
+  //Method handles when search input is changed
+  //The method takes the keyword checks with the caption and the images is updated with caption matching with keyword,
+  //thus triggering render and only showing those images
+  //The method maintains the original data in the controlled state using originalImageArr until the searchON is true
+  //Once the search is complete or search input value is ""then the images is set to originalImageArr rendering back to original state
   onSearchTextChange = (keyword) => {
     if (!(keyword === "")) {
       //check if search input value is empty
       var originalImageArr = [];
-      /*First search the originalImageArr is set to images following which it is set to itself so that data is not lost.*/
+      //First search the originalImageArr is set to images following it is set to itself so that data is not lost.
       this.state.searchOn
         ? (originalImageArr = this.state.originalImageArr)
         : (originalImageArr = this.state.images);
       var updatedImageArr = [];
-      var searchOn = true; // changing the searchOn to true until it's keyword is null
+      var searchOn = true; // changing the searchOn to true until it is keyword is null
       keyword = keyword.toLowerCase(); //changing to lower case for comparison
+
       originalImageArr.forEach((element) => {
-        var caption = element.caption.text.split("\n")[0]; // extracting the caption
-        caption.toLowerCase(); // changing to lower case
+        // extracting the caption and changing to lower case
+        var caption = element.caption.text.split("\n")[0].toLowerCase();
         if (caption.includes(keyword)) {
           //checking if keyword is substring of caption
           updatedImageArr.push(element); //if yes adding to the updatedImageArr
@@ -278,7 +339,7 @@ class Home extends Component {
     const { classes } = this.props;
     return (
       <div>
-        {/* Rendering the Header and passing three parameter profile_picture,showSearchBox & showProfileIcon based on the value it is shown in the header */}
+        {/* Rending the Header and passing three parameter profile_picture,showSearchBox & showProfileIcon based on the value it is shown in the header */}
         <Header
           profile_picture={this.state.profile_picture}
           showSearchBox={this.state.isLoggedIn ? true : false}
@@ -286,8 +347,7 @@ class Home extends Component {
           onSearchTextChange={this.onSearchTextChange}
           showMyAccount={true}
         />
-        {this.state.isLoggedIn === true ? (
-          //checking isLoggedIn is true only then the images are shown
+        {this.state.isLoggedIn === true ? ( //checking isLoggedIn is true only then the images are shown
           <div className="flex-container">
             <Grid
               container
@@ -297,14 +357,13 @@ class Home extends Component {
               className={classes.grid}
             >
               {this.state.images.map((
-                image
-                /*Iteration over images array and rendering each element of array as per the design*/
+                image //Iteration over images array and rendering each element of array as per the design.
               ) => (
-                /*components are data to the components are given as per the design and guidelines given
-                Grid Used to create two coloumns
-                Card used to show the images in two columns
-                Card Header to set the header of the card
-                Card Content to set the card content*/
+                // components are data to the components are given as per the design and guidelines given
+                //Grid Used to create two coloumns
+                //Card used to show the images in two columns
+                //Card Header to set the header of the card
+                //Card Content to set the card content
                 <Grid key={image.id} item xs={12} sm={6} className="grid-item">
                   <Card className={classes.card}>
                     <CardHeader
@@ -313,7 +372,7 @@ class Home extends Component {
                       }}
                       avatar={
                         <Avatar
-                          src={image.caption.from.profile_picture}
+                          src={this.state.profile_picture}
                           className={classes.avatar}
                         />
                       }
@@ -330,10 +389,15 @@ class Home extends Component {
                       />
                       <div className="horizontal-rule" />
                       <div className="image-caption">
-                        {image.caption.text.split("\n")[0]}
+                        {image.caption.text.substring(
+                          0,
+                          image.caption.text.indexOf("#")
+                        )}
                       </div>
                       <div className="image-hashtags">
-                        {image.caption.text.split("\n")[1]}
+                        {image.caption.text.substring(
+                          image.caption.text.indexOf("#")
+                        )}
                       </div>
                       <div>
                         <IconButton
@@ -363,10 +427,9 @@ class Home extends Component {
                       </div>
                       {this.state.comments.map(
                         (
-                          comment /*Iterating over comment array to show the comment to the corresponding image only*/
+                          comment //Iterating over comment array to show the comment to the corresponding image only
                         ) =>
-                          image.id === comment.imageId ? (
-                            /*check if comment.imageId and imageId is same only the append the comment*/
+                          image.id === comment.imageId ? ( //check if comment.imageId and imageId is same only the append the comment
                             <div className="comment-display" key={comment.id}>
                               <Typography
                                 variant="subtitle2"
@@ -391,7 +454,7 @@ class Home extends Component {
                       <FormControl className={classes.comment} fullWidth={true}>
                         <InputLabel htmlFor="comment">Add a comment</InputLabel>
                         <Input
-                          id="comment"
+                          id={"comment" + image.id}
                           className="comment-text"
                           name="commentText"
                           onChange={(event) =>
