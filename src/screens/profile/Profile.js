@@ -147,40 +147,6 @@ class Profile extends Component {
   componentDidMount() {
     if (this.state.isLoggedIn) {
       let that = this;
-      //   let resp = {};
-      //   let data = null;
-      //   let xhr = new XMLHttpRequest();
-      //   let that = this;
-      //   xhr.addEventListener("readystatechange", function() {
-      //     if (xhr.readyState === 4) {
-      //       resp = JSON.parse(this.responseText).data;
-      //       that.setState({ profilePicture: resp["profile_picture"] });
-      //       that.setState({ username: resp["username"] });
-      //       that.setState({ noOfPosts: resp["counts"]["media"] });
-      //       that.setState({ follows: resp["counts"]["follows"] });
-      //       that.setState({ followedBy: resp["counts"]["followed_by"] });
-      //       that.setState({ fullname: resp["full_name"] });
-      //     }
-      //   });
-      //   xhr.open(
-      //     "GET",
-      //     this.props.baseUrl + "?access_token=" + that.state.accessToken
-      //   );
-      //   xhr.send(data);
-      //   var imageData = null;
-      //   let imageXhr = new XMLHttpRequest();
-      //   imageXhr.addEventListener("readystatechange", function() {
-      //     if (imageXhr.readyState === 4) {
-      //       that.setState({ imagesData: JSON.parse(this.responseText).data });
-      //     }
-      //   });
-      //   imageXhr.open(
-      //     "GET",
-      //     this.props.baseUrl +
-      //       "media/recent?access_token=" +
-      //       that.state.accessToken
-      //   );
-      //   imageXhr.send(imageData);
       let pUrl =
         "https://graph.instagram.com/me/media?fields=id,caption&access_token=" +
         this.state.accessToken;
